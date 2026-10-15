@@ -1,0 +1,11 @@
+# Ignore raw data files (too large for GitHub)
+data/*.csv
+
+# Python cache & virtual environment
+__pycache__/
+*.pyc
+.env
+venv/
+
+# VS Code settings
+.vscode/
