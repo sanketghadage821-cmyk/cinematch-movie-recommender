@@ -3,7 +3,7 @@ import requests
 from src.data_loader import load_and_merge_tmdb_data
 from src.recommender import recommend, prepare_recommender_data
 
-# Page Setup
+# Page Configuration
 st.set_page_config(
     page_title="CineMatch AI | Modern Recommender",
     page_icon="🍿",
@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Ultra-Modern CSS Styling
+# Ultra-Modern Dark Glassmorphism CSS Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
@@ -26,7 +26,7 @@ st.markdown("""
         color: #f8fafc;
     }
 
-    /* Header Styling */
+    /* Header Banner */
     .hero-banner {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
         backdrop-filter: blur(12px);
@@ -52,23 +52,7 @@ st.markdown("""
         font-size: 1.15rem;
     }
 
-    /* Card Box Custom Container */
-    .card-box {
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 18px;
-        padding: 1.2rem;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        margin-bottom: 1rem;
-        transition: transform 0.3s ease, border-color 0.3s ease;
-    }
-
-    .card-box:hover {
-        transform: translateY(-6px);
-        border-color: #ff4b4b;
-    }
-
+    /* Badge & Text Styling */
     .match-badge {
         background: linear-gradient(90deg, #ff4b4b 0%, #f97316 100%);
         color: white;
@@ -78,7 +62,8 @@ st.markdown("""
         border-radius: 20px;
         letter-spacing: 1px;
         display: inline-block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        text-align: center;
     }
 
     .movie-title {
@@ -86,6 +71,7 @@ st.markdown("""
         font-weight: 700;
         color: #f8fafc;
         margin-top: 10px;
+        text-align: center;
         min-height: 48px;
     }
 
@@ -110,22 +96,32 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Reliable Movie Poster Fetcher via TMDB Search API
+# Multi-Source Poster Fetcher (OMDb + TMDB fallback)
 @st.cache_data
 def fetch_poster(movie_title):
-    api_key = "8265a5b71962334024912a2507d71a4f"
+    # Method 1: Fetch via OMDb API
     try:
-        url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={movie_title}"
-        response = requests.get(url, timeout=5)
-        data = response.json()
-        if data.get('results') and len(data['results']) > 0:
-            poster_path = data['results'][0].get('poster_path')
+        omdb_url = f"https://www.omdbapi.com/?t={movie_title}&apikey=trilogy"
+        res = requests.get(omdb_url, timeout=4).json()
+        if res.get('Response') == 'True' and res.get('Poster') and res['Poster'] != 'N/A':
+            return res['Poster']
+    except Exception:
+        pass
+
+    # Method 2: Fetch via TMDB Search API
+    try:
+        tmdb_url = f"https://api.themoviedb.org/3/search/movie?api_key=c72199b4564c718b52a945b0f592f61e&query={movie_title}"
+        res = requests.get(tmdb_url, timeout=4).json()
+        if res.get('results') and len(res['results']) > 0:
+            poster_path = res['results'][0].get('poster_path')
             if poster_path:
                 return f"https://image.tmdb.org/t/p/w500{poster_path}"
     except Exception:
         pass
-    # Fallback high quality placeholder if API fails
-    return "https://via.placeholder.com/500x750/1e293b/f8fafc?text=Movie+Poster"
+
+    # Method 3: Clean UI Card Graphic Placeholder
+    clean_title = movie_title.replace(" ", "+")
+    return f"https://placehold.co/500x750/1e293b/f8fafc?text={clean_title}"
 
 # Load Data
 @st.cache_data
